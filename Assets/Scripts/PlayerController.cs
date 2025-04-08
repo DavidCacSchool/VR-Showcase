@@ -7,28 +7,21 @@ public class PlayerController : MonoBehaviour
     public float gravity = -9.81f;
     public float jumpHeight = 1.5f;
     public Transform playerCamera;
-
     private float xRotation = 0f;
-    private CharacterController controller;
+    private CharacterController characterController;
     private Vector3 velocity;
     private bool isGrounded;
 
+    public bool canMove = true;
+
     void Start()
     {
-        controller = GetComponent<CharacterController>();
+        characterController = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
     }
 
     void Update()
     {
-        // Check if player is grounded
-        isGrounded = controller.isGrounded;
-        if (isGrounded && velocity.y < 0)
-        {
-            velocity.y = -2f;
-        }
-
-        // Mouse Look
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
 
@@ -38,20 +31,42 @@ public class PlayerController : MonoBehaviour
         playerCamera.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
         transform.Rotate(Vector3.up * mouseX);
 
-        // Movement
-        float moveX = Input.GetAxis("Horizontal");
-        float moveZ = Input.GetAxis("Vertical");
-        Vector3 move = transform.right * moveX + transform.forward * moveZ;
-        controller.Move(move * speed * Time.deltaTime);
+        if (canMove)
+        {
+            isGrounded = characterController.isGrounded;
 
-        // Jump
-        if (Input.GetButtonDown("Jump") && isGrounded)
+            float moveX = Input.GetAxis("Horizontal");
+            float moveZ = Input.GetAxis("Vertical");
+            Vector3 move = transform.right * moveX + transform.forward * moveZ;
+
+            characterController.Move(move * speed * Time.deltaTime);
+
+            if (isGrounded && velocity.y < 0)
+            {
+                velocity.y = -2f;
+            }
+
+            if (Input.GetButtonDown("Jump") && isGrounded)
+            {
+                Jump();
+            }
+
+            velocity.y += gravity * Time.deltaTime;
+
+            characterController.Move(velocity * Time.deltaTime);
+        }
+    }
+
+    public void SetMovement(bool canMove)
+    {
+        this.canMove = canMove;
+    }
+
+    public void Jump()
+    {
+        if (isGrounded)
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
         }
-
-        // Apply Gravity
-        velocity.y += gravity * Time.deltaTime;
-        controller.Move(velocity * Time.deltaTime);
     }
 }
